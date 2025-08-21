@@ -1,0 +1,6 @@
+# azure_vnet_checker/requirements.txt
+azure-identity==1.16.1
+azure-mgmt-network==25.2.0
+azure-mgmt-resource==23.1.0
+colorama==0.4.6
+ipaddress==1.0.23
