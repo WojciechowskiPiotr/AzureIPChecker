@@ -44,10 +44,17 @@ class AzureVNetChecker:
             epilog="""
 Examples:
   python main.py
-  python main.py -s "12345678-1234-1234-1234-123456789abc"
-  python main.py -rg "my-resource-group"
-  python main.py -s "subscription-id" -rg "resource-group"
+  python main.py --ip 10.0.0.1
+  python main.py --ip 172.16.20.0/24
+  python main.py -s "12345678-1234-1234-1234-123456789abc" --ip 192.168.1.0/24
+  python main.py -rg "my-resource-group" --ip 10.0.0.100/32
             """
+        )
+
+        parser.add_argument(
+            '--ip',
+            help='IP address or network in CIDR notation (e.g., 10.0.0.1 or 172.16.20.0/24)',
+            type=str
         )
 
         parser.add_argument(
@@ -102,9 +109,12 @@ Examples:
             print(f"{Fore.RED}Unexpected error loading configuration: {str(e)}{Style.RESET_ALL}")
             return False
 
-    def get_user_input(self) -> tuple:
+    def get_user_input(self, ip_from_args: str = None) -> tuple:
         """
-        Get IP address input from user.
+        Get IP address input from user or command line arguments.
+
+        Args:
+            ip_from_args (str): IP address provided via command line arguments
 
         Returns:
             tuple: (is_valid, network_object_or_error_message)
@@ -112,6 +122,20 @@ Examples:
         print(f"\n{Fore.CYAN}Azure VNet IP Address Checker{Style.RESET_ALL}")
         print(f"{Fore.CYAN}{'=' * 40}{Style.RESET_ALL}")
 
+        # If IP provided via command line, validate it directly
+        if ip_from_args:
+            print(f"\nUsing IP address from command line: {ip_from_args}")
+
+            is_valid, result = self.ip_validator.validate_input(ip_from_args)
+
+            if is_valid:
+                print(f"{Fore.GREEN}Validated network: {result}{Style.RESET_ALL}")
+                return True, result
+            else:
+                print(f"{Fore.RED}Error: {result}{Style.RESET_ALL}")
+                return False, result
+
+        # Interactive input mode
         while True:
             print(f"\nEnter IP address or network in CIDR notation:")
             print(f"Examples: 10.0.0.1/32, 172.16.20.0/24, or 192.168.1.100")
@@ -201,7 +225,7 @@ Examples:
                 return 1
 
             # Get user input
-            is_valid, target_network = self.get_user_input()
+            is_valid, target_network = self.get_user_input(args.ip)
             if not is_valid:
                 print(f"{Fore.YELLOW}Exiting...{Style.RESET_ALL}")
                 return 0
